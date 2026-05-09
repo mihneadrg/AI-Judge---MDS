@@ -23,8 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-pipeline = CourtPipeline(model="llama3")
-
+pipeline = CourtPipeline(model="llama-3.1-8b-instant")
 
 # ── Request/Response models ───────────────────────────────────────────────────
 
