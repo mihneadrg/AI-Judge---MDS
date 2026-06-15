@@ -1,4 +1,4 @@
-function VerdictDisplay({ verdict, onNewCase }) {
+function VerdictDisplay({ verdict, onNewCase, hideButton = false }) {
     return (
         <div className="bg-gradient-to-br from-amber-50 via-amber-100 to-amber-200 rounded-lg shadow-2xl border-4 border-amber-700 p-8">
             <div className="text-center mb-8 pb-6 border-b-4 border-double border-amber-800">
@@ -58,14 +58,16 @@ function VerdictDisplay({ verdict, onNewCase }) {
                 <div className="text-6xl opacity-20 transform rotate-12">⚖️</div>
             </div>
 
-            <button
-                onClick={onNewCase}
-                className="mt-8 w-full bg-amber-700 hover:bg-amber-800 text-amber-50 font-serif font-bold 
-                 py-4 px-6 rounded-lg shadow-lg uppercase tracking-wider text-lg
-                 transform transition hover:scale-105 active:scale-95"
-            >
-                📋 Depune un Caz Nou
-            </button>
+            {!hideButton && (
+                <button
+                    onClick={onNewCase}
+                    className="mt-8 w-full bg-amber-700 hover:bg-amber-800 text-amber-50 font-serif font-bold
+                     py-4 px-6 rounded-lg shadow-lg uppercase tracking-wider text-lg
+                     transform transition hover:scale-105 active:scale-95"
+                >
+                    📋 Depune un Caz Nou
+                </button>
+            )}
         </div>
     )
 }

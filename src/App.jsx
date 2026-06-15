@@ -3,48 +3,39 @@ import ModeSelector from './components/ModeSelector'
 import ComplaintForm from './components/ComplaintForm'
 import QuestionForm from './components/QuestionForm'
 import VerdictDisplay from './components/VerdictDisplay'
-import TrialWatcher from './components/TrialWatcher'
+import CourtroomView from './components/CourtroomView'
 
 // Stările aplicației:
-// "mode-select"    → selectezi modul (participă / urmărește)
-// "form"           → userul descrie situația (modul participă)
-// "question"       → agentul pune o întrebare (modul participă)
-// "loading"        → se procesează (modul participă)
-// "verdict"        → verdictul e gata (modul participă)
-// "watch-loading"  → procesul automat rulează pe backend (modul watch)
-// "watching"       → transcriptul e primit, se afișează pas cu pas (modul watch)
+// "mode-select" → selectezi modul
+// "form"        → userul descrie situația (modul participă)
+// "question"    → agentul pune o întrebare (modul participă)
+// "loading"     → se procesează (modul participă)
+// "verdict"     → verdictul e gata (modul participă)
+// "courtroom"   → camera live non-stop (modul watch)
 
 function App() {
   const [appState, setAppState] = useState('mode-select')
-
-  // Modul participă
   const [sessionId, setSessionId] = useState(null)
   const [currentQuestion, setCurrentQuestion] = useState(null)
   const [questionsAsked, setQuestionsAsked] = useState(0)
   const [verdict, setVerdict] = useState(null)
   const [error, setError] = useState(null)
 
-  // Modul watch
-  const [trialData, setTrialData] = useState(null)
-
   // ── Modul Participă ───────────────────────────────────────────────────────
 
   const handleSubmitSituation = async (situation) => {
     setError(null)
     setAppState('loading')
-
     try {
       const response = await fetch('http://localhost:8000/api/v1/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ situation }),
       })
-
       if (!response.ok) {
         const err = await response.json()
         throw new Error(err.detail || 'A apărut o eroare')
       }
-
       handlePipelineResponse(await response.json())
     } catch (err) {
       setError(err.message)
@@ -55,19 +46,16 @@ function App() {
   const handleAnswerQuestion = async (answer) => {
     setError(null)
     setAppState('loading')
-
     try {
       const response = await fetch('http://localhost:8000/api/v1/answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionId, answer }),
       })
-
       if (!response.ok) {
         const err = await response.json()
         throw new Error(err.detail || 'A apărut o eroare')
       }
-
       handlePipelineResponse(await response.json())
     } catch (err) {
       setError(err.message)
@@ -90,31 +78,6 @@ function App() {
     }
   }
 
-  // ── Modul Watch ────────────────────────────────────────────────────────────
-
-  const handleStartWatch = async () => {
-    setError(null)
-    setAppState('watch-loading')
-
-    try {
-      const response = await fetch('http://localhost:8000/api/v1/watch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      })
-
-      if (!response.ok) {
-        const err = await response.json()
-        throw new Error(err.detail || 'A apărut o eroare la generarea procesului')
-      }
-
-      setTrialData(await response.json())
-      setAppState('watching')
-    } catch (err) {
-      setError(err.message)
-      setAppState('mode-select')
-    }
-  }
-
   // ── Reset ─────────────────────────────────────────────────────────────────
 
   const handleNewCase = () => {
@@ -124,26 +87,32 @@ function App() {
     setQuestionsAsked(0)
     setVerdict(null)
     setError(null)
-    setTrialData(null)
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  const inCourtroom = appState === 'courtroom'
+
   return (
     <div className="min-h-screen py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className={`mx-auto ${inCourtroom ? 'max-w-4xl' : 'max-w-4xl'}`}>
 
-        {/* Header */}
-        <header className="text-center mb-12">
+        {/* Header — mai compact în modul cameră */}
+        <header className={`text-center ${inCourtroom ? 'mb-4' : 'mb-12'}`}>
           <div className="inline-block">
-            <h1 className="text-5xl font-serif font-bold text-amber-400 mb-2 tracking-wide">
+            <h1 className={`font-serif font-bold text-amber-400 tracking-wide
+              ${inCourtroom ? 'text-2xl mb-1' : 'text-5xl mb-2'}`}>
               ⚖️ THE DRAMATIC AI JUDGE
             </h1>
-            <div className="h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent"></div>
+            {!inCourtroom && (
+              <>
+                <div className="h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
+                <p className="text-amber-100 mt-4 text-lg font-legal italic">
+                  "Where everyday disputes meet theatrical justice"
+                </p>
+              </>
+            )}
           </div>
-          <p className="text-amber-100 mt-4 text-lg font-legal italic">
-            "Where everyday disputes meet theatrical justice"
-          </p>
         </header>
 
         {/* Indicator de progres (modul participă) */}
@@ -161,7 +130,7 @@ function App() {
             )}
             <ModeSelector
               onSelectParticipate={() => { setError(null); setAppState('form') }}
-              onSelectWatch={handleStartWatch}
+              onSelectWatch={() => { setError(null); setAppState('courtroom') }}
             />
           </>
         )}
@@ -187,12 +156,8 @@ function App() {
           <VerdictDisplay verdict={verdict} onNewCase={handleNewCase} />
         )}
 
-        {appState === 'watch-loading' && (
-          <WatchLoadingScreen />
-        )}
-
-        {appState === 'watching' && trialData && (
-          <TrialWatcher trialData={trialData} onNewCase={handleNewCase} />
+        {appState === 'courtroom' && (
+          <CourtroomView onExit={handleNewCase} />
         )}
 
       </div>
@@ -208,7 +173,6 @@ function ProgressIndicator({ appState, questionsAsked }) {
     { label: `Interogatoriu (${questionsAsked}/3)`, done: false, active: appState === 'question' || appState === 'loading' },
     { label: 'Verdict', done: false },
   ]
-
   return (
     <div className="flex items-center justify-center mb-8 gap-2">
       {steps.map((step, i) => (
@@ -232,7 +196,6 @@ function LoadingScreen({ questionsAsked }) {
   const message = questionsAsked > 0
     ? 'Curtea analizează răspunsurile...'
     : 'Curtea examinează cazul...'
-
   return (
     <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-2xl border-4 border-amber-600 p-12 text-center">
       <div className="text-6xl mb-6 animate-bounce">⚖️</div>
@@ -240,42 +203,10 @@ function LoadingScreen({ questionsAsked }) {
       <p className="text-amber-700 font-legal italic mb-8">Agenții AI deliberează... Vă rugăm să așteptați.</p>
       <div className="flex justify-center gap-2">
         {[0, 1, 2].map(i => (
-          <div
-            key={i}
-            className="w-3 h-3 bg-amber-600 rounded-full animate-bounce"
-            style={{ animationDelay: `${i * 0.15}s` }}
-          />
+          <div key={i} className="w-3 h-3 bg-amber-600 rounded-full animate-bounce"
+            style={{ animationDelay: `${i * 0.15}s` }} />
         ))}
       </div>
-    </div>
-  )
-}
-
-function WatchLoadingScreen() {
-  return (
-    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg shadow-2xl border-4 border-slate-500 p-12 text-center">
-      <div className="text-6xl mb-6">🎭</div>
-      <h2 className="text-2xl font-serif font-bold text-slate-100 mb-4">
-        Agenții AI pregătesc procesul...
-      </h2>
-      <p className="text-slate-400 font-legal italic mb-3">
-        Reclamantul generează situația, Inchizitorul formulează întrebările,
-      </p>
-      <p className="text-slate-400 font-legal italic mb-8">
-        Procurorul construiește dosarul, Judecătorul deliberează.
-      </p>
-      <div className="flex justify-center gap-2 mb-6">
-        {[0, 1, 2].map(i => (
-          <div
-            key={i}
-            className="w-3 h-3 bg-slate-400 rounded-full animate-bounce"
-            style={{ animationDelay: `${i * 0.15}s` }}
-          />
-        ))}
-      </div>
-      <p className="text-slate-500 font-legal text-sm italic">
-        Aceasta poate dura 20-40 de secunde...
-      </p>
     </div>
   )
 }
