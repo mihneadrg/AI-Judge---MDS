@@ -9,26 +9,27 @@ Primul agent din pipeline. Primește situația brută de la utilizator
 from .base_agent import BaseAgent
 
 
-PROSECUTOR_SYSTEM_PROMPT = PROSECUTOR_SYSTEM_PROMPT = """You are PROSECUTOR MAXIMUS, the most dramatic and theatrical \
+PROSECUTOR_SYSTEM_PROMPT = """You are PROCUROR MAXIMUS, the most dramatic and theatrical \
 prosecutor in the history of the Dramatic AI Court of Justice.
 
 CRITICAL: Respond with ONLY a valid JSON object. No text before or after. No markdown.
+IMPORTANT: Write ALL text values in Romanian language.
 
 The JSON must have exactly these fields:
 {
-  "case_type": "short category based on the ACTUAL situation",
+  "case_type": "categorie scurtă bazată pe situația REALĂ",
   "severity_level": "one of: PETTY | MODERATE | SEVERE | CATASTROPHIC",
-  "formal_charges": ["charge directly about what happened", "second specific charge", "third related charge"],
-  "evidence_list": ["specific fact from the situation", "another specific detail", "logical inference"],
-  "prosecution_summary": "one dramatic sentence that mentions the ACTUAL events",
-  "recommended_sentence_hint": "a punishment hint that fits the SPECIFIC crime"
+  "formal_charges": ["acuzație despre ce s-a întâmplat", "a doua acuzație specifică", "a treia acuzație conexă"],
+  "evidence_list": ["fapt specific din situație", "alt detaliu specific", "inferență logică"],
+  "prosecution_summary": "o propoziție dramatică care menționează evenimentele REALE",
+  "recommended_sentence_hint": "un indiciu de pedeapsă care se potrivește cu crima SPECIFICĂ"
 }
 
 Rules:
 - Every field MUST reference the ACTUAL situation — no generic placeholders
 - Charges must be about what ACTUALLY happened
 - Evidence must come from ACTUAL details in the complaint
-- Use Latin phrases for drama (in flagrante delicto, mens rea, etc.)
+- You may use Latin phrases for extra drama (in flagrante delicto, mens rea, etc.)
 - Output ONLY the JSON object. Nothing else.
 """
 
@@ -110,20 +111,20 @@ Analyze this situation and build the prosecution case. Respond with JSON only.""
     def _fallback_response(self, reason: str, raw_response: str = "", original_input: str = "") -> dict:
         """Răspuns de rezervă când modelul eșuează."""
         return {
-            "case_type": "Unclassified Misconduct",
+            "case_type": "Conduită Necorespunzătoare",
             "severity_level": "MODERATE",
             "formal_charges": [
-                "Conduct Unbecoming a Citizen",
-                "Disturbance of the Social Order",
-                "Failure to Maintain Acceptable Standards",
+                "Comportament nedemn de un cetățean",
+                "Tulburarea ordinii sociale",
+                "Nerespectarea standardelor de conviețuire",
             ],
             "evidence_list": [
-                "The complainant's testimony",
-                "General circumstantial evidence",
-                "The defendant's suspicious demeanor",
+                "Declarația reclamantului",
+                "Probe circumstanțiale generale",
+                "Comportamentul suspect al inculpatului",
             ],
-            "prosecution_summary": "The accused stands before this court charged with grievous misconduct.",
-            "recommended_sentence_hint": "The court shall determine an appropriate punishment.",
+            "prosecution_summary": "Acuzatul se prezintă în fața acestei curți învinuit de abateri grave.",
+            "recommended_sentence_hint": "Curtea va stabili o pedeapsă corespunzătoare.",
             "error": reason,
             "raw_response": raw_response,
             "original_input": original_input,

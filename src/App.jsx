@@ -1,23 +1,34 @@
 import { useState } from 'react'
+import ModeSelector from './components/ModeSelector'
 import ComplaintForm from './components/ComplaintForm'
 import QuestionForm from './components/QuestionForm'
 import VerdictDisplay from './components/VerdictDisplay'
+import TrialWatcher from './components/TrialWatcher'
 
 // Stările aplicației:
-// "form"      → userul descrie situația
-// "question"  → agentul pune o întrebare
-// "loading"   → se procesează (Prosecutor + Judge)
-// "verdict"   → verdictul e gata
+// "mode-select"    → selectezi modul (participă / urmărește)
+// "form"           → userul descrie situația (modul participă)
+// "question"       → agentul pune o întrebare (modul participă)
+// "loading"        → se procesează (modul participă)
+// "verdict"        → verdictul e gata (modul participă)
+// "watch-loading"  → procesul automat rulează pe backend (modul watch)
+// "watching"       → transcriptul e primit, se afișează pas cu pas (modul watch)
 
 function App() {
-  const [appState, setAppState] = useState('form')
+  const [appState, setAppState] = useState('mode-select')
+
+  // Modul participă
   const [sessionId, setSessionId] = useState(null)
   const [currentQuestion, setCurrentQuestion] = useState(null)
   const [questionsAsked, setQuestionsAsked] = useState(0)
   const [verdict, setVerdict] = useState(null)
   const [error, setError] = useState(null)
 
-  // Userul trimite situația inițială
+  // Modul watch
+  const [trialData, setTrialData] = useState(null)
+
+  // ── Modul Participă ───────────────────────────────────────────────────────
+
   const handleSubmitSituation = async (situation) => {
     setError(null)
     setAppState('loading')
@@ -34,16 +45,13 @@ function App() {
         throw new Error(err.detail || 'A apărut o eroare')
       }
 
-      const data = await response.json()
-      handlePipelineResponse(data)
-
+      handlePipelineResponse(await response.json())
     } catch (err) {
       setError(err.message)
       setAppState('form')
     }
   }
 
-  // Userul răspunde la o întrebare
   const handleAnswerQuestion = async (answer) => {
     setError(null)
     setAppState('loading')
@@ -60,16 +68,13 @@ function App() {
         throw new Error(err.detail || 'A apărut o eroare')
       }
 
-      const data = await response.json()
-      handlePipelineResponse(data)
-
+      handlePipelineResponse(await response.json())
     } catch (err) {
       setError(err.message)
       setAppState('question')
     }
   }
 
-  // Procesează răspunsul de la pipeline (comun pentru /start și /answer)
   const handlePipelineResponse = (data) => {
     if (data.state === 'question') {
       setSessionId(data.session_id)
@@ -85,14 +90,44 @@ function App() {
     }
   }
 
+  // ── Modul Watch ────────────────────────────────────────────────────────────
+
+  const handleStartWatch = async () => {
+    setError(null)
+    setAppState('watch-loading')
+
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/watch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.detail || 'A apărut o eroare la generarea procesului')
+      }
+
+      setTrialData(await response.json())
+      setAppState('watching')
+    } catch (err) {
+      setError(err.message)
+      setAppState('mode-select')
+    }
+  }
+
+  // ── Reset ─────────────────────────────────────────────────────────────────
+
   const handleNewCase = () => {
-    setAppState('form')
+    setAppState('mode-select')
     setSessionId(null)
     setCurrentQuestion(null)
     setQuestionsAsked(0)
     setVerdict(null)
     setError(null)
+    setTrialData(null)
   }
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -111,17 +146,28 @@ function App() {
           </p>
         </header>
 
-        {/* Indicator de progres — vizibil când nu suntem pe form */}
-        {appState !== 'form' && appState !== 'verdict' && (
+        {/* Indicator de progres (modul participă) */}
+        {(appState === 'question' || appState === 'loading') && (
           <ProgressIndicator appState={appState} questionsAsked={questionsAsked} />
         )}
 
-        {/* Conținut principal în funcție de stare */}
+        {/* Conținut principal */}
+        {appState === 'mode-select' && (
+          <>
+            {error && (
+              <div className="mb-6 bg-red-100 border-2 border-red-500 text-red-800 px-4 py-3 rounded font-legal text-center">
+                {error}
+              </div>
+            )}
+            <ModeSelector
+              onSelectParticipate={() => { setError(null); setAppState('form') }}
+              onSelectWatch={handleStartWatch}
+            />
+          </>
+        )}
+
         {appState === 'form' && (
-          <ComplaintForm
-            onSubmit={handleSubmitSituation}
-            error={error}
-          />
+          <ComplaintForm onSubmit={handleSubmitSituation} error={error} />
         )}
 
         {appState === 'loading' && (
@@ -138,10 +184,15 @@ function App() {
         )}
 
         {appState === 'verdict' && (
-          <VerdictDisplay
-            verdict={verdict}
-            onNewCase={handleNewCase}
-          />
+          <VerdictDisplay verdict={verdict} onNewCase={handleNewCase} />
+        )}
+
+        {appState === 'watch-loading' && (
+          <WatchLoadingScreen />
+        )}
+
+        {appState === 'watching' && trialData && (
+          <TrialWatcher trialData={trialData} onNewCase={handleNewCase} />
         )}
 
       </div>
@@ -185,12 +236,8 @@ function LoadingScreen({ questionsAsked }) {
   return (
     <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-2xl border-4 border-amber-600 p-12 text-center">
       <div className="text-6xl mb-6 animate-bounce">⚖️</div>
-      <h2 className="text-2xl font-serif font-bold text-amber-900 mb-4">
-        {message}
-      </h2>
-      <p className="text-amber-700 font-legal italic mb-8">
-        Agenții AI deliberează... Vă rugăm să așteptați.
-      </p>
+      <h2 className="text-2xl font-serif font-bold text-amber-900 mb-4">{message}</h2>
+      <p className="text-amber-700 font-legal italic mb-8">Agenții AI deliberează... Vă rugăm să așteptați.</p>
       <div className="flex justify-center gap-2">
         {[0, 1, 2].map(i => (
           <div
@@ -200,6 +247,35 @@ function LoadingScreen({ questionsAsked }) {
           />
         ))}
       </div>
+    </div>
+  )
+}
+
+function WatchLoadingScreen() {
+  return (
+    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg shadow-2xl border-4 border-slate-500 p-12 text-center">
+      <div className="text-6xl mb-6">🎭</div>
+      <h2 className="text-2xl font-serif font-bold text-slate-100 mb-4">
+        Agenții AI pregătesc procesul...
+      </h2>
+      <p className="text-slate-400 font-legal italic mb-3">
+        Reclamantul generează situația, Inchizitorul formulează întrebările,
+      </p>
+      <p className="text-slate-400 font-legal italic mb-8">
+        Procurorul construiește dosarul, Judecătorul deliberează.
+      </p>
+      <div className="flex justify-center gap-2 mb-6">
+        {[0, 1, 2].map(i => (
+          <div
+            key={i}
+            className="w-3 h-3 bg-slate-400 rounded-full animate-bounce"
+            style={{ animationDelay: `${i * 0.15}s` }}
+          />
+        ))}
+      </div>
+      <p className="text-slate-500 font-legal text-sm italic">
+        Aceasta poate dura 20-40 de secunde...
+      </p>
     </div>
   )
 }

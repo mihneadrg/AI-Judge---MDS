@@ -81,6 +81,23 @@ async def answer_question(request: AnswerRequest):
     return result
 
 
+@app.post("/api/v1/watch")
+async def watch_trial():
+    """
+    Pornește un proces complet automat — fără input uman.
+    ComplainantAgent generează situația și răspunde la întrebări.
+
+    Response: transcript complet cu situație, interogatoriu, rechizitoriu și verdict.
+    """
+    import traceback
+    try:
+        result = pipeline.run_autonomous_trial()
+        return result
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=503, detail=str(e))
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(

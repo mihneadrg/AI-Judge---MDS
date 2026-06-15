@@ -154,3 +154,61 @@ Asigurarea robusteței aplicației.
 **Criterii de Acceptanță:**
 - Există cel puțin un test case pentru un răspuns ideal, formatat perfect de LLM.
 - Există cel puțin un test case pentru un răspuns parțial sau greșit formatat de LLM.
+
+---
+
+## 🎭 Epic 6: Modul Watch — Proces Complet Automat între Agenți ✅
+
+Acest epic introduce un mod de vizionare în care toți actorii procesului (inclusiv reclamantul) sunt jucați de agenți AI, fără niciun input uman. Utilizatorul este spectator.
+
+### [US-6.1] Selectorul de Mod ✅
+
+**User Story:** Ca utilizator, vreau să aleg la pornire între a participa la proces sau a urmări un proces generat complet de AI, astfel încât să pot experimenta ambele perspective.
+
+**Criterii de Acceptanță:**
+- La deschiderea aplicației apare un ecran de selectare cu două opțiuni clare.
+- "Participă la Proces" pornește fluxul existent (utilizatorul introduce plângerea).
+- "Urmărește un Proces" declanșează modul complet automat.
+- Ambele moduri revin la ecranul de selecție după finalizarea procesului.
+
+**Implementare:** `ModeSelector.jsx`, stare `mode-select` în `App.jsx`.
+
+---
+
+### [US-6.2] Agentul Reclamant (ComplainantAgent) ✅
+
+**User Story:** Ca spectator, vreau ca reclamantul să fie jucat de un agent AI care generează o situație coerentă și răspunde consistent la întrebări, astfel încât procesul să fie credibil și amuzant fără input uman.
+
+**Criterii de Acceptanță:**
+- `ComplainantAgent` generează o plângere aleatorie cu detalii specifice (nume, loc, timp, context).
+- Agentul răspunde la întrebările Interogatorului rămânând în personaj și fără să se contrazică.
+- Există un răspuns fallback dacă parsarea JSON eșuează.
+
+**Implementare:** `src/agents/complainant_agent.py`.
+
+---
+
+### [US-6.3] Pipeline Autonom (run_autonomous_trial) ✅
+
+**User Story:** Ca spectator, vreau ca întregul ciclu al procesului să ruleze automat pe server, astfel încât să primesc un transcript complet cu toate intervențiile fiecărui agent.
+
+**Criterii de Acceptanță:**
+- Metoda `run_autonomous_trial()` orchestrează: ComplainantAgent → InterrogatorAgent (max 3 runde) → ComplainantAgent (răspunsuri) → ProsecutorAgent → JudgeAgent.
+- Returnează un transcript JSON cu: `situation`, `complainant_name`, `interrogation[]`, `prosecution`, `final_verdict`, `processing_time_seconds`.
+- Endpoint nou `POST /api/v1/watch` expune această funcționalitate.
+
+**Implementare:** `CourtPipeline.run_autonomous_trial()` în `pipeline.py`, endpoint în `main.py`.
+
+---
+
+### [US-6.4] Afișarea Pas cu Pas a Procesului (TrialWatcher) ✅
+
+**User Story:** Ca spectator, vreau să văd procesul desfășurându-se treptat, cu fiecare intervenție apărând pe rând, astfel încât să am senzația că urmăresc un proces în timp real.
+
+**Criterii de Acceptanță:**
+- Fiecare intervenție (reclamant, inchizitor, procuror, judecător) apare separat cu un delay de 2 secunde.
+- Fiecare actor are un stil vizual distinct: reclamant (verde), inchizitor (violet), procuror (roșu), verdict (auriu).
+- Un indicator "în desfășurare / încheiat" este vizibil pe tot parcursul.
+- La final se afișează `VerdictDisplay` complet cu butonul de caz nou.
+
+**Implementare:** `TrialWatcher.jsx`, animație `fadeIn` în `tailwind.config.js`.

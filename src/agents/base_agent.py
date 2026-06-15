@@ -45,7 +45,7 @@ class BaseAgent(ABC):
                     {"role": "user", "content": user_message},
                 ],
                 temperature=self.temperature,
-                max_tokens=2048,
+                max_tokens=4096,
             )
             return response.choices[0].message.content.strip()
 
@@ -53,11 +53,13 @@ class BaseAgent(ABC):
             raise RuntimeError(f"[{self.name}] Groq API error: {str(e)}")
 
     def _safe_parse_json(self, text: str) -> Optional[dict]:
+        # 1. Parse direct
         try:
             return json.loads(text)
         except json.JSONDecodeError:
             pass
 
+        # 2. Extrage din bloc markdown ```json ... ```
         json_match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
         if json_match:
             try:
@@ -65,6 +67,7 @@ class BaseAgent(ABC):
             except json.JSONDecodeError:
                 pass
 
+        # 3. Extrage primul obiect JSON din text
         brace_match = re.search(r"\{.*\}", text, re.DOTALL)
         if brace_match:
             try:

@@ -13,6 +13,7 @@ import uuid
 from .prosecutor_agent import ProsecutorAgent
 from .judge_agent import JudgeAgent
 from .interrogator_agent import InterrogatorAgent
+from .complainant_agent import ComplainantAgent
 
 
 # Stochează sesiunile active în memorie
@@ -170,6 +171,78 @@ class CourtPipeline:
             },
             "questions_asked": session["questions_asked"],
             "error": None,
+        }
+
+    def run_autonomous_trial(self) -> dict:
+        """
+        Rulează un proces complet automat — fără input uman.
+
+        ComplainantAgent generează situația și răspunde la întrebări.
+        Returnează transcript complet cu toate etapele.
+
+        Returns:
+            {
+                "complainant_name": str,
+                "situation": str,
+                "interrogation": [{ "question": str, "answer": str }, ...],
+                "prosecution": dict,
+                "final_verdict": dict,
+                "processing_time_seconds": float,
+            }
+        """
+        complainant = ComplainantAgent(model=self.model, temperature=0.9)
+        start_time = time.time()
+
+        # Pasul 1: Reclamantul generează o situație
+        situation_data = complainant.generate_situation()
+        situation = situation_data["situation"]
+        complainant_name = situation_data["complainant_name"]
+
+        # Pasul 2: Interogatoriu automat
+        qa_history = []
+        questions_asked = 0
+        interrogation = []
+
+        while questions_asked < 3:
+            interrogation_result = self.interrogator.run({
+                "situation": situation,
+                "qa_history": qa_history,
+                "questions_asked": questions_asked,
+            })
+
+            if not interrogation_result.get("needs_more_info"):
+                break
+
+            question = interrogation_result["question"]
+            answer_data = complainant.answer_question(
+                situation=situation,
+                complainant_name=complainant_name,
+                question=question,
+                qa_history=qa_history,
+            )
+            answer = answer_data["answer"]
+
+            qa_history.append((question, answer))
+            interrogation.append({"question": question, "answer": answer})
+            questions_asked += 1
+
+        # Pasul 3: Construim contextul complet și pronunțăm verdictul
+        full_context = situation
+        if qa_history:
+            full_context += "\n\nAdditional context from court interrogation:"
+            for q, a in qa_history:
+                full_context += f"\n- {q}\n  Answer: {a}"
+
+        prosecution = self.prosecutor.run(full_context)
+        verdict = self.judge_agent.run(prosecution)
+
+        return {
+            "complainant_name": complainant_name,
+            "situation": situation,
+            "interrogation": interrogation,
+            "prosecution": prosecution,
+            "final_verdict": verdict,
+            "processing_time_seconds": round(time.time() - start_time, 2),
         }
 
     def _error_response(self, error_msg: str, start_time: float) -> dict:
