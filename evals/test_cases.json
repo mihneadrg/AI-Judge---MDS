@@ -1,0 +1,58 @@
+[
+  {
+    "id": "tc_001",
+    "category": "edge_case_short",
+    "input_text": "test",
+    "mode": "interactive",
+    "expected_behavior": "safe_parsing_no_crash"
+  },
+  {
+    "id": "tc_002",
+    "category": "civil_dispute",
+    "input_text": "Am comandat o cască moto de pe o platformă online, dar a ajuns cu viziera zgâriată, iar vânzătorul refuză returul pe motiv că am desigilat cutia.",
+    "mode": "interactive",
+    "expected_behavior": "standard_verdict"
+  },
+  {
+    "id": "tc_003",
+    "category": "petty_theft",
+    "input_text": "Colega mea de birou a luat o țigară de pe pachetul meu fără să ceară permisiunea.",
+    "mode": "interactive",
+    "expected_behavior": "standard_verdict"
+  },
+  {
+    "id": "tc_004",
+    "category": "autonomous_spectator",
+    "input_text": "Am parcat pe locul vecinului și acum a blocat mașina mea cu a lui refuzând să mă lase să ies.",
+    "mode": "autonomous",
+    "expected_behavior": "agent_simulates_user_responses"
+  },
+  {
+    "id": "tc_005",
+    "category": "vandalism",
+    "input_text": "Un grup de adolescenți a desenat cu graffiti pe ușa garajului meu azi noapte. Am înregistrări pe camera de supraveghere.",
+    "mode": "interactive",
+    "expected_behavior": "standard_verdict"
+  },
+  {
+    "id": "tc_006",
+    "category": "contract_breach",
+    "input_text": "Am plătit un avans de 2000 de lei pentru renovarea băii, dar meșterul nu a mai răspuns la telefon de două săptămâni.",
+    "mode": "interactive",
+    "expected_behavior": "standard_verdict"
+  },
+  {
+    "id": "tc_007",
+    "category": "noise_complaint",
+    "input_text": "Vecinii de la etajul 3 dau o petrecere cu muzică la maximum în fiecare marți noaptea, iar eu nu pot să dorm ca să merg la facultate.",
+    "mode": "interactive",
+    "expected_behavior": "standard_verdict"
+  },
+  {
+    "id": "tc_008",
+    "category": "cyber_security",
+    "input_text": "Cineva mi-a spart contul de pe o rețea socială și trimite mesaje jignitoare prietenilor mei în numele meu.",
+    "mode": "interactive",
+    "expected_behavior": "standard_verdict"
+  }
+]

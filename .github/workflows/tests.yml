@@ -1,0 +1,30 @@
+name: CI — Teste Automate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Rulare Teste Agenți
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout cod
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Instalare dependențe
+        run: pip install -r requirements.txt
+
+      - name: Rulare teste pytest
+        env:
+          GROQ_API_KEY: "test-key-not-used-in-unit-tests"
+        run: pytest src/agents/ -v --tb=short

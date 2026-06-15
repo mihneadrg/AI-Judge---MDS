@@ -1,4 +1,4 @@
-function VerdictDisplay({ verdict, onNewCase }) {
+function VerdictDisplay({ verdict, onNewCase, hideButton = false }) {
     return (
         <div className="bg-gradient-to-br from-amber-50 via-amber-100 to-amber-200 rounded-lg shadow-2xl border-4 border-amber-700 p-8">
             <div className="text-center mb-8 pb-6 border-b-4 border-double border-amber-800">
@@ -41,6 +41,42 @@ function VerdictDisplay({ verdict, onNewCase }) {
 
             <Section title="📖 Motivare Juridică" content={verdict.legal_reasoning} />
 
+            {verdict.legal_article && (
+                <div className="my-8 bg-slate-50 border-2 border-slate-400 rounded-lg p-6 shadow-lg">
+                    <h3 className="text-2xl font-serif font-bold text-slate-800 mb-1 flex items-center">
+                        ⚖️ Temei Legal
+                    </h3>
+                    <p className="text-sm text-slate-500 font-legal italic mb-4">
+                        Articolul de lege aplicabil acestui caz
+                    </p>
+                    <div className="bg-white border-l-4 border-slate-700 rounded p-4 shadow-inner">
+                        <p className="text-lg font-serif font-bold text-slate-900">
+                            {verdict.legal_article.article_number}
+                            {verdict.legal_article.article_title
+                                ? ` — ${verdict.legal_article.article_title}`
+                                : ''}
+                        </p>
+                        <p className="text-sm font-legal text-slate-600 mb-3">
+                            {verdict.legal_article.law_code}
+                        </p>
+                        <p className="text-base font-legal text-slate-800 leading-relaxed mb-3">
+                            {verdict.legal_article.article_text}
+                        </p>
+                        {verdict.legal_article.relevance && (
+                            <p className="text-base font-legal text-slate-700 leading-relaxed border-t border-slate-200 pt-3">
+                                <span className="font-bold">Aplicabilitate: </span>
+                                {verdict.legal_article.relevance}
+                            </p>
+                        )}
+                    </div>
+                    {verdict.legal_article.disclaimer && (
+                        <p className="text-xs text-slate-400 italic mt-3 text-center">
+                            {verdict.legal_article.disclaimer}
+                        </p>
+                    )}
+                </div>
+            )}
+
             <div className="mt-8 bg-gradient-to-r from-amber-800 to-amber-900 text-amber-50 p-6 rounded-lg shadow-xl">
                 <h3 className="text-xl font-serif font-bold mb-3 text-center">
                     💬 Cuvintele Finale ale Instanței
@@ -58,14 +94,16 @@ function VerdictDisplay({ verdict, onNewCase }) {
                 <div className="text-6xl opacity-20 transform rotate-12">⚖️</div>
             </div>
 
-            <button
-                onClick={onNewCase}
-                className="mt-8 w-full bg-amber-700 hover:bg-amber-800 text-amber-50 font-serif font-bold 
-                 py-4 px-6 rounded-lg shadow-lg uppercase tracking-wider text-lg
-                 transform transition hover:scale-105 active:scale-95"
-            >
-                📋 Depune un Caz Nou
-            </button>
+            {!hideButton && (
+                <button
+                    onClick={onNewCase}
+                    className="mt-8 w-full bg-amber-700 hover:bg-amber-800 text-amber-50 font-serif font-bold
+                     py-4 px-6 rounded-lg shadow-lg uppercase tracking-wider text-lg
+                     transform transition hover:scale-105 active:scale-95"
+                >
+                    📋 Depune un Caz Nou
+                </button>
+            )}
         </div>
     )
 }
