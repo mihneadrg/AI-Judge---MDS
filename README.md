@@ -36,34 +36,30 @@ O aplicație web de tip "AI-First" bazată pe o arhitectură multi-agent autonom
 
 ## 📂 Structura Proiectului
 
-dramatic-ai-judge/
+```text
+siem-tool/
 ├── .github/
 │   └── workflows/
-│       └── tests.yml          # Pipeline-ul de CI/CD (GitHub Actions)
-├── evals/
-│   ├── evals_report.md        # Raportul generat automat în urma rulării evaluărilor LLM
-│   ├── run_evals.py           # Scriptul de rulare a testelor de calitate pentru agenți
-│   └── test_cases.json        # Setul de date sintetic cu cazuri de test marginale
-├── src/
-│   ├── agents/                # Nucleul de Inteligență Artificială (Multi-Agent Setup)
-│   │   ├── base_agent.py      # Clasa abstractă de bază, gestiune API Groq și parsare JSON robustă
-│   │   ├── complainant_agent.py # Agentul Reclamant (simulează comportamentul uman în modul Watch)
-│   │   ├── interrogator_agent.py # Court Inquisitor Severus - logica multi-turn de chestionare
-│   │   ├── judge_agent.py     # Judecătoarea Dramaticus Maximus - persona teatrală și verdictul
-│   │   ├── legal_research_agent.py # Consilierul Juridic - maparea factuală pe legile reale din România
-│   │   └── pipeline.py        # Orchestratorul central de stări și fluxuri de date
-│   ├── components/            # Componente reutilizabile de UI rulate în React
-│   │   ├── ComplaintForm.jsx  # Formularul primar de input cu sanitizare și limită de caractere
-│   │   ├── ModeSelector.jsx   # Ecranul de selecție a modului de joc (Participă vs. Spectator)
-│   │   ├── QuestionForm.jsx   # Interfața de chat interactivă pentru faza de interogatoriu
-│   │   ├── TrialWatcher.jsx   # Componenta de redare asincronă, pas cu pas, pentru modul autonom
-│   │   └── VerdictDisplay.jsx # Afișarea solemnă a deciziei, sentinței și temeiului legal
-│   ├── App.jsx                # Managerul principal de stări al frontend-ului
-│   └── main.py                # Backend-ul FastAPI cu endpoint-urile REST aferente
-├── arhitectura.md             # Documentația vizuală a sistemului (Diagrame)
-├── BACKLOG.md                 # Planificarea proiectului (Epics & User Stories)
-├── raport_ai.md               # Raportul de conformitate privind utilizarea asistenților AI
-└── requirements.txt           # Dependențele Python necesare pentru backend
+│       └── ci.yml             # Pipeline CI/CD automatizat pentru teste
+├── backend/                   # 🐘 PHP / Symfony 8 (REST API + SSE via Mercure)
+│   └── src/
+│       ├── Controller/        # Endpoints API (Alert, Config, Event, Incident, Rule)
+│       ├── Entity/            # Modele de date Doctrine ORM
+│       ├── Repository/        # Repozitorii pentru operațiuni pe baza de date
+│       └── Service/           # Logica de business (ex. EventPublisher pentru SSE)
+├── frontend/                  # ⚛️ React / TypeScript UI
+│   └── src/
+│       └── tests/             # Teste automate (Vitest)
+├── services/                  # 🐍 Microservicii autonome Python
+│   ├── agents/                # Integrare LLM (Ollama) pentru decizii de securitate
+│   │   └── tests/
+│   │       └── test_agent_evals.py # Evaluări automate pentru modelele de limbaj
+│   ├── capture/               # Packet sniffer cu Scapy și parsare de trafic
+│   └── rules/                 # Motorul de detecție și trigger pentru alerte
+├── docs/                      # Documentația tehnică a proiectului
+│   ├── diagrams/              # Diagrame UML, secvență și arhitectură
+│   └── SIEM_backlog.md        # Planificarea Agile (User stories)
+└── docker-compose.yml         # 🐳 Orchestrare containere (Redis, DB, AI Agents)
 
 ---
 
