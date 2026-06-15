@@ -1,0 +1,20 @@
+[
+  {
+    "id": "tc_001",
+    "category": "edge_case_short",
+    "input_text": "test",
+    "expected_behavior": "safe_parsing_no_crash"
+  },
+  {
+    "id": "tc_002",
+    "category": "civil_dispute",
+    "input_text": "Am comandat o cască moto de pe o platformă online, dar a ajuns cu viziera zgâriată, iar vânzătorul refuză returul pe motiv că am desigilat cutia.",
+    "expected_behavior": "standard_verdict"
+  },
+  {
+    "id": "tc_003",
+    "category": "petty_theft",
+    "input_text": "Colega mea de birou a luat o țigară de pe pachetul meu fără să ceară permisiunea.",
+    "expected_behavior": "standard_verdict"
+  }
+]
