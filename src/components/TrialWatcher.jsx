@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import VerdictDisplay from './VerdictDisplay'
 
-// Construiește lista ordonată de pași din datele procesului
 function buildSteps(trialData) {
   const steps = []
 
@@ -28,30 +27,39 @@ function buildSteps(trialData) {
   return steps
 }
 
-// Delay între pași (ms)
 const STEP_DELAY = 2000
 
-function TrialWatcher({ trialData, onNewCase }) {
+function TrialWatcher({ trialData, onNewCase, onComplete, isCourtroom = false }) {
   const steps = buildSteps(trialData)
   const [visibleCount, setVisibleCount] = useState(0)
 
+  // Revealuire pași
   useEffect(() => {
     if (visibleCount >= steps.length) return
     const timer = setTimeout(() => setVisibleCount(c => c + 1), STEP_DELAY)
     return () => clearTimeout(timer)
   }, [visibleCount, steps.length])
 
+  // Notifică parent când s-au afișat toți pașii (mod cameră)
+  useEffect(() => {
+    if (isCourtroom && onComplete && visibleCount >= steps.length) {
+      onComplete()
+    }
+  }, [visibleCount, steps.length, isCourtroom, onComplete])
+
   const allVisible = visibleCount >= steps.length
 
   return (
     <div className="space-y-5">
-      {/* Banner de stare */}
-      <div className={`text-center py-2 px-4 rounded-full text-sm font-legal font-semibold mx-auto w-fit
-        ${allVisible
-          ? 'bg-amber-700 text-amber-50'
-          : 'bg-slate-700 text-slate-200 animate-pulse'}`}>
-        {allVisible ? '⚖️ Proces încheiat' : '🎭 Proces în desfășurare...'}
-      </div>
+      {/* Banner stare — ascuns în modul cameră (bara LIVE înlocuiește) */}
+      {!isCourtroom && (
+        <div className={`text-center py-2 px-4 rounded-full text-sm font-legal font-semibold mx-auto w-fit
+          ${allVisible
+            ? 'bg-amber-700 text-amber-50'
+            : 'bg-slate-700 text-slate-200 animate-pulse'}`}>
+          {allVisible ? '⚖️ Proces încheiat' : '🎭 Proces în desfășurare...'}
+        </div>
+      )}
 
       {/* Pași vizibili */}
       {steps.slice(0, visibleCount).map((step, i) => (
@@ -59,7 +67,7 @@ function TrialWatcher({ trialData, onNewCase }) {
           key={i}
           step={step}
           onNewCase={onNewCase}
-          isLast={i === steps.length - 1}
+          isCourtroom={isCourtroom}
         />
       ))}
 
@@ -93,11 +101,15 @@ function nextActorLabel(step) {
   }
 }
 
-function StepCard({ step, onNewCase, isLast }) {
+function StepCard({ step, onNewCase, isCourtroom }) {
   if (step.type === 'verdict') {
     return (
       <div className="animate-fadeIn">
-        <VerdictDisplay verdict={step.verdict} onNewCase={onNewCase} />
+        <VerdictDisplay
+          verdict={step.verdict}
+          onNewCase={onNewCase}
+          hideButton={isCourtroom}
+        />
       </div>
     )
   }
@@ -137,17 +149,14 @@ function StepCard({ step, onNewCase, isLast }) {
   return (
     <div className={`animate-fadeIn ${c.align} ${c.maxW}`}>
       <div className={`bg-gradient-to-br ${c.bg} rounded-lg shadow-lg border-2 ${c.border} overflow-hidden`}>
-        {/* Header */}
         <div className={`${c.header} text-white px-4 py-2 flex items-center gap-2`}>
           <span className="text-lg">{c.icon}</span>
           <span className="font-serif font-bold text-sm uppercase tracking-wider">{c.label}</span>
         </div>
 
-        {/* Body */}
         <div className="px-5 py-4">
           <p className="font-legal text-gray-800 leading-relaxed">{step.text}</p>
 
-          {/* Acuzații listate (doar pentru procuror) */}
           {step.charges && step.charges.length > 0 && (
             <div className="mt-4 border-t border-red-200 pt-3">
               <p className="text-xs font-serif font-bold text-red-700 uppercase tracking-wider mb-2">
