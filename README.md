@@ -1,6 +1,6 @@
 # ⚖️ The Dramatic AI Judge
 
-O aplicație web de tip "AI-First" bazată pe o arhitectură multi-agent autonomă. Proiectul preia dispute cotidiene sau neînțelegeri mărunte din viața de zi cu zi și le transformă într-un spectacol judiciar plin de umor teatral, finalizat printr-un verdict dramatic dublat de un temei juridic factual din legislația reală a României.
+O aplicație web de tip "AI-First" bazată pe o arhitectură multi-agent autonomă. Proiectul preia dispute cotidiene sau neînțelegeri mărunte din viața de zi cu zi și le transformă într-un spectacol judiciar plin de umor teatral, finalizat printr-un verdict dramatic dublat de un temei juridic factual.
 
 ---
 
@@ -8,8 +8,8 @@ O aplicație web de tip "AI-First" bazată pe o arhitectură multi-agent autonom
 
 | Componentă | Tehnologie / Framework |
 |---|---|
-| **Backend API** | Python 3.11 / FastAPI |
-| **Orchestrare Multi-Agent** | Python Custom Pipeline (Autonom / Interactiv Multi-turn) |
+| **Backend API** | Python 3.11 / FastAPI / Pydantic |
+| **Orchestrare Multi-Agent** | Python Custom Pipeline (Interactive & Autonomous modes) |
 | **Modele LLM Inference** | Groq Cloud API (Llama 3.1 8B Instant / Llama 3 8B) |
 | **Frontend UI** | React 19 / Vite / Tailwind CSS |
 | **Automatizare Teste / Evals** | pytest / Custom LLM Evaluation Framework |
@@ -19,47 +19,49 @@ O aplicație web de tip "AI-First" bazată pe o arhitectură multi-agent autonom
 
 ## 📌 Corelarea cu Baremul de Notare MDS
 
-| Componentă Barem | Punctaj | Locație în Repository / Dovada Implementării |
+| Componentă Barem | Punctaj | Locație / Dovada Implementării |
 |---|---|---|
 | **A. Implementare & Live Demo** | 7 pct | Aplicație complet funcțională Backend-Frontend. Integrare stabilă Groq API cu mecanisme de retry în `base_agent.py`. |
-| **A. Minim 2 Agenți AI în funcționalitate** | 3 pct | Proiectul depășește cerința minimă, implementând **5 agenți AI specializați**: `InterrogatorAgent`, `ComplainantAgent`, `ProsecutorAgent`, `JudgeAgent`, `LegalResearchAgent`. [Vezi folderul de agenți](./src/agents/). |
+| **A. Minim 2 Agenți AI în funcționalitate** | 3 pct | Proiectul depășește cerința, implementând **5 agenți AI specializați**: `InterrogatorAgent`, `ComplainantAgent`, `ProsecutorAgent`, `JudgeAgent`, `LegalResearchAgent`. [Vezi folderul de agenți](./src/agents/). |
 | **A. Demo Offline (Screencast)** | — | 🎥 [Urmăriți Prezentarea Video pe YouTube](PUNE_LINKUL_TAU_DE_YOUTUBE_AICI) |
-| **B1. User Stories & Backlog Creation** | 2 pct | [BACKLOG.md](./BACKLOG.md) — Conține 14 User Stories complete cu criterii de acceptanță clare, structurate pe 6 Epics tehnice. |
-| **B2. Diagrame (Arhitectură & Workflow)** | 1 pct | [arhitectura.md](./arhitectura.md) — Diagramă de workflow și interacțiune asincronă multi-agent randată nativ în format Mermaid.js. |
-| **B3. Source Control cu Git** | 1 pct | Lucru colaborativ pe branch-uri de feature, Pull Requests pentru integrare și minim 5 commit-uri per student (vezi istoricul de Git). |
-| **B4. Teste Automate & Agent Evals** | 2 pct | Unit Tests în [src/agents/test_agents.py](./src/agents/test_agents.py) și un sistem complet de LLM Evals în [evals/run_evals.py](./evals/run_evals.py) cu generare automată de raport calitativ în [evals_report.md](./evals/evals_report.md). |
-| **B5. Raportare Bug și Rezolvare cu PR** | 1 pct | Corectarea bug-ului logic din scriptul de evaluare legat de severitatea `CATASTROPHIC`. [Vezi Pull Request #1](https://github.com/mihneadrg/AI-Judge---MDS/pull/3) și [Issue #1](https://github.com/mihneadrg/AI-Judge---MDS/issues). |
-| **B6. Pipeline CI/CD** | 1 pct | [.github/workflows/tests.yml](./.github/workflows/tests.yml) — Flux automatizat prin GitHub Actions care instalează dependențele și rulează suita de teste la fiecare Push sau Pull Request pe branch-ul `main`. |
-| **B7. Raport utilizare tool-uri AI** | 2 pct | [raport_ai.md](./raport_ai.md) — Document exhaustiv ce detaliază modul în care Claude, Gemini și GitHub Copilot au asistat echipa în design, prompt engineering și codare. |
+| **B1. User Stories & Backlog Creation** | 2 pct | [BACKLOG.md](./BACKLOG.md) — Conține 14 User Stories complete cu criterii de acceptanță clare, structurate pe 6 Epics. |
+| **B2. Diagrame (Arhitectură & Workflow)** | 1 pct | [arhitectura.md](./arhitectura.md) — Diagramă de workflow multi-agent randată nativ cu Mermaid.js. |
+| **B3. Source Control cu Git** | 1 pct | GitHub: lucru colaborativ, branch-uri și commit-uri multiple per student (vezi istoricul repo-ului). |
+| **B4. Teste Automate & Agent Evals** | 2 pct | Unit Tests cu pytest și un sistem complet de LLM Evals cu generare automată de raport calitativ în [evals/evals_report.md](./evals/evals_report.md). |
+| **B5. Raportare Bug și Rezolvare cu PR** | 1 pct | Corectarea limitării nivelurilor de severitate în fișierul de evals. [Vezi Pull Request și Issue pe GitHub](PUNE_LINKUL_CATRE_PULL_REQUEST_AICI). |
+| **B6. Pipeline CI/CD** | 1 pct | [.github/workflows/tests.yml](./.github/workflows/tests.yml) — Flux automatizat prin GitHub Actions care rulează suita de teste la fiecare Push pe `main`. |
+| **B7. Raport utilizare tool-uri AI** | 2 pct | [raport_ai.md](./raport_ai.md) — Document ce detaliază modul în care Claude, Gemini și GitHub Copilot au asistat echipa în design și codare. |
 
 ---
 
 ## 📂 Structura Proiectului
 
 ```text
-siem-tool/
+AI-Judge---MDS/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml             # Pipeline CI/CD automatizat pentru teste
-├── backend/                   # 🐘 PHP / Symfony 8 (REST API + SSE via Mercure)
-│   └── src/
-│       ├── Controller/        # Endpoints API (Alert, Config, Event, Incident, Rule)
-│       ├── Entity/            # Modele de date Doctrine ORM
-│       ├── Repository/        # Repozitorii pentru operațiuni pe baza de date
-│       └── Service/           # Logica de business (ex. EventPublisher pentru SSE)
-├── frontend/                  # ⚛️ React / TypeScript UI
-│   └── src/
-│       └── tests/             # Teste automate (Vitest)
-├── services/                  # 🐍 Microservicii autonome Python
-│   ├── agents/                # Integrare LLM (Ollama) pentru decizii de securitate
-│   │   └── tests/
-│   │       └── test_agent_evals.py # Evaluări automate pentru modelele de limbaj
-│   ├── capture/               # Packet sniffer cu Scapy și parsare de trafic
-│   └── rules/                 # Motorul de detecție și trigger pentru alerte
-├── docs/                      # Documentația tehnică a proiectului
-│   ├── diagrams/              # Diagrame UML, secvență și arhitectură
-│   └── SIEM_backlog.md        # Planificarea Agile (User stories)
-└── docker-compose.yml         # 🐳 Orchestrare containere (Redis, DB, AI Agents)
+│       └── tests.yml          # Pipeline CI/CD pentru rularea testelor automate
+├── evals/                     # Evaluări calitative pentru agenții LLM
+│   ├── evals_report.md
+│   ├── run_evals.py
+│   └── test_cases.json
+├── src/
+│   ├── agents/                # Nucleul de Inteligență Artificială (Multi-Agent Setup)
+│   │   ├── base_agent.py      # Abstractizare apeluri Groq API și parsare JSON robustă
+│   │   ├── complainant_agent.py # Agentul Reclamant (Modul autonom)
+│   │   ├── interrogator_agent.py # Court Inquisitor Severus
+│   │   ├── judge_agent.py     # Judecătoarea Dramaticus Maximus
+│   │   ├── legal_research_agent.py # Consilierul Juridic
+│   │   ├── pipeline.py        # Orchestratorul central
+│   │   └── test_agents.py     # Suita de teste automate (pytest)
+│   ├── components/            # Componente reutilizabile React UI
+│   │   └── ...
+│   ├── App.jsx                # Managerul principal de stări UI
+│   └── main.py                # Backend FastAPI (Endpoints REST)
+├── arhitectura.md             # Documentația vizuală a sistemului
+├── BACKLOG.md                 # Planificarea Agile
+├── raport_ai.md               # Raportul utilizării AI în SDLC
+└── requirements.txt           # Dependențele de backend
 
 ---
 
