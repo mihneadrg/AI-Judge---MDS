@@ -11,6 +11,7 @@ function buildSteps(trialData) {
   })
 
   for (const { question, answer } of trialData.interrogation) {
+    if (!question || !question.trim()) continue
     steps.push({ type: 'interrogator', text: question })
     steps.push({ type: 'complainant', name: trialData.complainant_name, text: answer })
   }

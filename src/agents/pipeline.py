@@ -227,23 +227,27 @@ class CourtPipeline:
         situation_data = complainant.generate_situation()
         situation = situation_data["situation"]
         complainant_name = situation_data["complainant_name"]
+        time.sleep(20)
 
-        # Pasul 2: Interogatoriu automat
+        # Pasul 2: Interogatoriu automat — max 1 întrebare
         qa_history = []
         questions_asked = 0
         interrogation = []
 
-        while questions_asked < 3:
+        while questions_asked < 1:
             interrogation_result = self.interrogator.run({
                 "situation": situation,
                 "qa_history": qa_history,
                 "questions_asked": questions_asked,
             })
+            time.sleep(20)
 
             if not interrogation_result.get("needs_more_info"):
                 break
 
             question = interrogation_result["question"]
+            if not question or not question.strip():
+                break  # model said needs_more_info but gave no question — skip
             answer_data = complainant.answer_question(
                 situation=situation,
                 complainant_name=complainant_name,
@@ -251,6 +255,7 @@ class CourtPipeline:
                 qa_history=qa_history,
             )
             answer = answer_data["answer"]
+            time.sleep(20)
 
             qa_history.append((question, answer))
             interrogation.append({"question": question, "answer": answer})
@@ -264,8 +269,19 @@ class CourtPipeline:
                 full_context += f"\n- {q}\n  Answer: {a}"
 
         prosecution = self.prosecutor.run(full_context)
+        time.sleep(20)
         verdict = self.judge_agent.run(prosecution)
-        legal_article = self._research_law(prosecution, verdict)
+        # LegalResearchAgent omis în modul autonom — economisire apeluri API
+        legal_article = {
+            "law_code": "Codul Civil al României",
+            "article_number": "Art. 1357",
+            "article_title": "Răspunderea delictuală",
+            "article_text": "Cel care cauzează altuia un prejudiciu printr-o faptă ilicită este obligat să îl repare.",
+            "relevance": "Articol aplicabil prezentului caz.",
+            "disclaimer": "Informație juridică orientativă, nu constituie consultanță juridică.",
+            "agent": "LegalResearchAgent",
+            "model_used": self.model,
+        }
 
         return {
             "complainant_name": complainant_name,

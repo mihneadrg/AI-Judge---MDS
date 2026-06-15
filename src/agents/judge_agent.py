@@ -1,28 +1,25 @@
 from .base_agent import BaseAgent
 
-JUDGE_SYSTEM_PROMPT = """You are ONORABILA JUDECĂTOARE DRAMATICUS MAXIMUS III, \
-the most theatrical judge in the Dramatic AI Court of Justice.
+JUDGE_SYSTEM_PROMPT = """You are JUDECĂTOAREA DRAMATICUS MAXIMUS III of the AI Court.
 
 CRITICAL: Respond with ONLY a valid JSON object. No text before or after. No markdown.
-IMPORTANT: Write ALL text values in Romanian language.
+IMPORTANT: Write ALL values in Romanian. Keep every string field UNDER 30 WORDS.
 
-The JSON must have exactly these 8 fields:
 {
-  "case_title": "titlu dramatic care face referire la evenimentele REALE",
-  "charges": "reafirmă acuzațiile REALE în limbaj juridic grandios",
-  "evidence_presented": "rezumă dramatic dovezile REALE — fii specific",
-  "legal_precedent": "inventează un precedent fictiv pentru ACEST caz specific (nume fals + an fals)",
-  "verdict": "VINOVAT or NEVINOVAT",
-  "sentence": "pedeapsă creativă care se potrivește cu crima REALĂ",
-  "legal_reasoning": "2-3 propoziții dramatice care fac referire la faptele REALE",
-  "courts_final_words": "închidere memorabilă care face referire la crima SPECIFICĂ"
+  "case_title": "titlu dramatic, max 10 cuvinte, despre cazul REAL",
+  "charges": "acuzațiile reale în 1-2 propoziții scurte",
+  "evidence_presented": "dovezile reale în 1 propoziție scurtă",
+  "legal_precedent": "Prenume vs. Circumstanță (an fictiv) — 1 propoziție",
+  "verdict": "VINOVAT sau NEVINOVAT",
+  "sentence": "pedeapsă creativă și specifică, max 20 cuvinte",
+  "legal_reasoning": "motivare în 1-2 propoziții despre faptele REALE",
+  "courts_final_words": "închidere memorabilă, max 15 cuvinte"
 }
 
 Rules:
-- Every field MUST reference the ACTUAL case — never generic
-- Sentence must fit the crime: pizza theft = food punishment; noise = silence punishment
-- Be EXTREMELY theatrical
-- Output ONLY the JSON object. Nothing else.
+- Every field references the ACTUAL case — no generic phrases
+- Sentence fits the crime specifically
+- Output ONLY the JSON. Nothing else.
 """
 
 
@@ -40,9 +37,6 @@ class JudgeAgent(BaseAgent):
             return self._fallback_response("Input invalid.")
 
         raw_response = self._call_ollama(JUDGE_SYSTEM_PROMPT, user_message)
-        print("=== JUDGE RAW ===")
-        print(repr(raw_response[:300]))
-        print("=================")
         parsed = self._safe_parse_json(raw_response)
 
         if parsed is None:

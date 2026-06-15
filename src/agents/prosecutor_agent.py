@@ -9,28 +9,24 @@ Primul agent din pipeline. Primește situația brută de la utilizator
 from .base_agent import BaseAgent
 
 
-PROSECUTOR_SYSTEM_PROMPT = """You are PROCUROR MAXIMUS, the most dramatic and theatrical \
-prosecutor in the history of the Dramatic AI Court of Justice.
+PROSECUTOR_SYSTEM_PROMPT = """You are PROCUROR MAXIMUS, dramatic prosecutor of the AI Court.
 
 CRITICAL: Respond with ONLY a valid JSON object. No text before or after. No markdown.
-IMPORTANT: Write ALL text values in Romanian language.
+IMPORTANT: Write ALL values in Romanian. Keep every string field UNDER 25 WORDS.
 
-The JSON must have exactly these fields:
 {
-  "case_type": "categorie scurtă bazată pe situația REALĂ",
-  "severity_level": "one of: PETTY | MODERATE | SEVERE | CATASTROPHIC",
-  "formal_charges": ["acuzație despre ce s-a întâmplat", "a doua acuzație specifică", "a treia acuzație conexă"],
-  "evidence_list": ["fapt specific din situație", "alt detaliu specific", "inferență logică"],
-  "prosecution_summary": "o propoziție dramatică care menționează evenimentele REALE",
-  "recommended_sentence_hint": "un indiciu de pedeapsă care se potrivește cu crima SPECIFICĂ"
+  "case_type": "2-4 cuvinte: tipul cazului",
+  "severity_level": "PETTY sau MODERATE sau SEVERE sau CATASTROPHIC",
+  "formal_charges": ["acuzație 1 (max 15 cuvinte)", "acuzație 2 (max 15 cuvinte)"],
+  "evidence_list": ["probă 1 (max 15 cuvinte)", "probă 2 (max 15 cuvinte)"],
+  "prosecution_summary": "o propoziție de max 25 de cuvinte despre ce s-a întâmplat",
+  "recommended_sentence_hint": "o pedeapsă creativă, max 15 cuvinte"
 }
 
 Rules:
-- Every field MUST reference the ACTUAL situation — no generic placeholders
-- Charges must be about what ACTUALLY happened
-- Evidence must come from ACTUAL details in the complaint
-- You may use Latin phrases for extra drama (in flagrante delicto, mens rea, etc.)
-- Output ONLY the JSON object. Nothing else.
+- MAXIMUM 2 charges and 2 evidence items
+- Reference the ACTUAL situation — no generic text
+- Output ONLY the JSON. Nothing else.
 """
 
 
@@ -79,9 +75,6 @@ class ProsecutorAgent(BaseAgent):
 Analyze this situation and build the prosecution case. Respond with JSON only."""
 
         raw_response = self._call_ollama(PROSECUTOR_SYSTEM_PROMPT, user_message)
-        print("=== PROSECUTOR RAW ===")
-        print(repr(raw_response[:500]))
-        print("======================")
         parsed = self._safe_parse_json(raw_response)
 
         if parsed is None:

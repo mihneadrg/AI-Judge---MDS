@@ -93,9 +93,6 @@ class LegalResearchAgent(BaseAgent):
             return self._fallback_response("Input invalid.")
 
         raw_response = self._call_ollama(LEGAL_RESEARCH_SYSTEM_PROMPT, user_message)
-        print("=== LEGAL RESEARCH RAW ===")
-        print(repr(raw_response[:300]))
-        print("==========================")
         parsed = self._safe_parse_json(raw_response)
 
         if parsed is None:

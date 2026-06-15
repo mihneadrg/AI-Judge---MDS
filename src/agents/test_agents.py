@@ -385,3 +385,185 @@ class TestBaseAgentUtilities:
         """Util: string gol returnează None."""
         result = self.agent._safe_parse_json("")
         assert result is None
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# TESTS: ComplainantAgent
+# ════════════════════════════════════════════════════════════════════════════
+
+VALID_SITUATION_JSON = {
+    "situation": (
+        "Vecinul meu, Gică Bătăios, îmi parchează mașina exact cu 3 centimetri "
+        "peste linia de demarcație a locului meu de parcare în fiecare dimineață "
+        "de la 4 martie încoace. Marți la 8:47 a făcut-o DIN NOU!"
+    ),
+    "complainant_name": "Maria Indignată-Rău",
+}
+
+VALID_ANSWER_JSON = {
+    "answer": (
+        "Da, Onorată Instanță! Gică Bătăios a parcat iar cu 3 centimetri peste linie. "
+        "Am fotografii, am martori și am chiar și o riglă cu care am măsurat!"
+    ),
+}
+
+
+class TestComplainantAgent:
+
+    def setup_method(self):
+        from src.agents.complainant_agent import ComplainantAgent
+        self.agent = ComplainantAgent(model="llama3", temperature=0.9)
+
+    # ── generate_situation() ─────────────────────────────────────────────────
+
+    def test_generate_situation_returns_dict(self):
+        """Eval: generate_situation() returnează un dict."""
+        with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_SITUATION_JSON)):
+            result = self.agent.generate_situation()
+
+        assert isinstance(result, dict)
+
+    def test_generate_situation_has_required_fields(self):
+        """Eval: generate_situation() conține câmpurile 'situation' și 'complainant_name'."""
+        with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_SITUATION_JSON)):
+            result = self.agent.generate_situation()
+
+        assert "situation" in result, "Câmpul 'situation' lipsește"
+        assert "complainant_name" in result, "Câmpul 'complainant_name' lipsește"
+
+    def test_generate_situation_fields_are_non_empty_strings(self):
+        """Eval: câmpurile returnate sunt stringuri non-goale."""
+        with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_SITUATION_JSON)):
+            result = self.agent.generate_situation()
+
+        assert isinstance(result["situation"], str) and len(result["situation"]) > 0
+        assert isinstance(result["complainant_name"], str) and len(result["complainant_name"]) > 0
+
+    def test_generate_situation_fallback_on_invalid_json(self):
+        """Robustețe: JSON invalid → fallback cu situație hardcodată."""
+        with patch.object(self.agent, "_call_ollama", MagicMock(return_value="Nu sunt JSON!")):
+            result = self.agent.generate_situation()
+
+        assert isinstance(result, dict)
+        assert "situation" in result
+        assert "complainant_name" in result
+        assert result["complainant_name"] == "Maria Indignată-Rău"
+
+    def test_generate_situation_fallback_on_empty_response(self):
+        """Robustețe: răspuns gol → fallback gracioasă."""
+        with patch.object(self.agent, "_call_ollama", MagicMock(return_value="")):
+            result = self.agent.generate_situation()
+
+        assert isinstance(result, dict)
+        assert "situation" in result
+        assert len(result["situation"]) > 0
+
+    # ── answer_question() ────────────────────────────────────────────────────
+
+    def test_answer_question_returns_dict(self):
+        """Eval: answer_question() returnează un dict."""
+        with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_ANSWER_JSON)):
+            result = self.agent.answer_question(
+                situation="Vecinul parchează prost.",
+                complainant_name="Maria Indignată-Rău",
+                question="De cât timp se întâmplă asta?",
+                qa_history=[],
+            )
+
+        assert isinstance(result, dict)
+
+    def test_answer_question_has_answer_field(self):
+        """Eval: answer_question() conține câmpul 'answer'."""
+        with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_ANSWER_JSON)):
+            result = self.agent.answer_question(
+                situation="Vecinul parchează prost.",
+                complainant_name="Maria Indignată-Rău",
+                question="De cât timp se întâmplă asta?",
+                qa_history=[],
+            )
+
+        assert "answer" in result
+        assert isinstance(result["answer"], str)
+        assert len(result["answer"]) > 0
+
+    def test_answer_question_fallback_on_invalid_json(self):
+        """Robustețe: JSON invalid la răspuns → fallback cu text hardcodat."""
+        with patch.object(self.agent, "_call_ollama", MagicMock(return_value="Nu sunt JSON!")):
+            result = self.agent.answer_question(
+                situation="Test",
+                complainant_name="Test Name",
+                question="Test question?",
+                qa_history=[],
+            )
+
+        assert isinstance(result, dict)
+        assert "answer" in result
+        assert len(result["answer"]) > 0
+
+    def test_answer_question_with_qa_history(self):
+        """Eval: answer_question() funcționează cu istoric de întrebări anterioare."""
+        history = [
+            ("Ce s-a întâmplat?", "Vecinul a parcat prost."),
+            ("Ai martori?", "Da, doamna Popescu a văzut tot!"),
+        ]
+        with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_ANSWER_JSON)):
+            result = self.agent.answer_question(
+                situation="Vecinul parchează prost.",
+                complainant_name="Maria",
+                question="Mai ai ceva de adăugat?",
+                qa_history=history,
+            )
+
+        assert isinstance(result, dict)
+        assert "answer" in result
+
+    def test_answer_question_with_empty_history(self):
+        """Eval: answer_question() funcționează cu istoric gol."""
+        with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_ANSWER_JSON)):
+            result = self.agent.answer_question(
+                situation="Situație de test",
+                complainant_name="Ion Test",
+                question="Prima întrebare?",
+                qa_history=[],
+            )
+
+        assert "answer" in result
+
+    # ── run() – delegare ─────────────────────────────────────────────────────
+
+    def test_run_without_question_calls_generate_situation(self):
+        """Eval: run() fără 'question' delegă la generate_situation()."""
+        with patch.object(self.agent, "generate_situation",
+                          MagicMock(return_value=VALID_SITUATION_JSON)) as mock_gen:
+            self.agent.run({})
+
+        mock_gen.assert_called_once()
+
+    def test_run_with_question_calls_answer_question(self):
+        """Eval: run() cu 'question' în dict delegă la answer_question()."""
+        input_data = {
+            "question": "De ce ai venit la curte?",
+            "situation": "Vecinul parchează prost.",
+            "complainant_name": "Maria",
+            "qa_history": [],
+        }
+        with patch.object(self.agent, "answer_question",
+                          MagicMock(return_value=VALID_ANSWER_JSON)) as mock_ans:
+            self.agent.run(input_data)
+
+        mock_ans.assert_called_once()
+
+    def test_run_with_string_input_calls_generate_situation(self):
+        """Eval: run() cu string (nu dict) delegă la generate_situation()."""
+        with patch.object(self.agent, "generate_situation",
+                          MagicMock(return_value=VALID_SITUATION_JSON)) as mock_gen:
+            self.agent.run("ceva text")
+
+        mock_gen.assert_called_once()
+
+    def test_run_returns_dict(self):
+        """Eval: run() returnează întotdeauna un dict."""
+        with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_SITUATION_JSON)):
+            result = self.agent.run({})
+
+        assert isinstance(result, dict)

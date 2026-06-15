@@ -1,9 +1,21 @@
-from fastapi import FastAPI, HTTPException
+import sys
+
+# Force UTF-8 on every import of this module (covers both cold starts and hot-reloads)
+for _s in (sys.stdout, sys.stderr):
+    if _s and hasattr(_s, 'reconfigure'):
+        try:
+            _s.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
+
+import logging
+import os
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
 
 from src.agents.pipeline import CourtPipeline
 
@@ -25,7 +37,24 @@ app.add_middleware(
 
 pipeline = CourtPipeline(model="llama-3.1-8b-instant")
 
-# ── Request/Response models ───────────────────────────────────────────────────
+
+@app.on_event("startup")
+async def fix_logging_handlers():
+    """Fix any logging handlers that uvicorn created with charmap encoding."""
+    all_loggers = [logging.root] + [
+        logging.getLogger(n)
+        for n in logging.Logger.manager.loggerDict
+        if isinstance(logging.Logger.manager.loggerDict[n], logging.Logger)
+    ]
+    for lgr in all_loggers:
+        for handler in lgr.handlers:
+            stream = getattr(handler, 'stream', None)
+            if stream and hasattr(stream, 'reconfigure'):
+                try:
+                    stream.reconfigure(encoding='utf-8', errors='replace')
+                except Exception:
+                    pass
+
 
 class StartCaseRequest(BaseModel):
     situation: str = Field(..., max_length=1000, min_length=1)
@@ -42,8 +71,6 @@ class AnswerRequest(BaseModel):
     answer: str = Field(..., min_length=1)
 
 
-# ── Endpoints ─────────────────────────────────────────────────────────────────
-
 @app.get("/")
 async def root():
     return {"message": "AI Judge API is running", "status": "healthy", "version": "2.0.0"}
@@ -51,51 +78,29 @@ async def root():
 
 @app.post("/api/v1/start")
 async def start_case(request: StartCaseRequest):
-    """
-    Începe un caz nou. Returnează fie o întrebare de clarificare,
-    fie direct verdictul dacă situația e suficient de detaliată.
-
-    Response:
-        state == "question" → frontend afișează întrebarea și un input
-        state == "verdict"  → frontend afișează verdictul
-    """
     result = pipeline.start_case(request.situation)
-
     if result.get("state") == "error":
         raise HTTPException(status_code=503, detail=result.get("error"))
-
     return result
 
 
 @app.post("/api/v1/answer")
 async def answer_question(request: AnswerRequest):
-    """
-    Trimite răspunsul utilizatorului la întrebarea curentă.
-    Returnează fie următoarea întrebare, fie verdictul final.
-    """
     result = pipeline.answer_question(request.session_id, request.answer)
-
     if result.get("state") == "error":
         raise HTTPException(status_code=503, detail=result.get("error"))
-
     return result
 
 
 @app.post("/api/v1/watch")
 async def watch_trial():
-    """
-    Pornește un proces complet automat — fără input uman.
-    ComplainantAgent generează situația și răspunde la întrebări.
-
-    Response: transcript complet cu situație, interogatoriu, rechizitoriu și verdict.
-    """
-    import traceback
     try:
         result = pipeline.run_autonomous_trial()
         return result
     except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=503, detail=str(e))
+        # Use ascii-safe error message to avoid secondary encoding errors
+        safe_msg = str(e).encode('utf-8', errors='replace').decode('utf-8')
+        raise HTTPException(status_code=503, detail=safe_msg)
 
 
 @app.exception_handler(HTTPException)

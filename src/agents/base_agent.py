@@ -37,20 +37,41 @@ class BaseAgent(ABC):
 
         client = Groq(api_key=api_key)
 
-        try:
-            response = client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message},
-                ],
-                temperature=self.temperature,
-                max_tokens=4096,
-            )
-            return response.choices[0].message.content.strip()
+        import time
 
-        except Exception as e:
-            raise RuntimeError(f"[{self.name}] Groq API error: {str(e)}")
+        MAX_RETRIES = 2
+        RATE_LIMIT_WAIT = 65  # seconds — enough for the 1-minute TPM window to reset
+
+        for attempt in range(MAX_RETRIES + 1):
+            try:
+                response = client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ],
+                    temperature=self.temperature,
+                    max_tokens=1200,
+                    response_format={"type": "json_object"},
+                )
+                return response.choices[0].message.content.strip()
+
+            except Exception as e:
+                err_str = str(e)
+                is_rate_limit = (
+                    "429" in err_str
+                    or "rate_limit" in err_str.lower()
+                    or "rate limit" in err_str.lower()
+                    or "tokens per minute" in err_str.lower()
+                )
+                if is_rate_limit and attempt < MAX_RETRIES:
+                    logger.warning(
+                        f"[{self.name}] Rate limit hit (attempt {attempt + 1}/{MAX_RETRIES + 1}). "
+                        f"Waiting {RATE_LIMIT_WAIT}s..."
+                    )
+                    time.sleep(RATE_LIMIT_WAIT)
+                    continue
+                raise RuntimeError(f"[{self.name}] Groq API error: {err_str}")
 
     def _safe_parse_json(self, text: str) -> Optional[dict]:
         # 1. Parse direct
