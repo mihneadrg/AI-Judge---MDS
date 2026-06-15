@@ -27,4 +27,4 @@ jobs:
       - name: Rulare teste pytest
         env:
           GROQ_API_KEY: "test-key-not-used-in-unit-tests"
-        run: pytest src/agents/test_agents.py -v --tb=short
+        run: pytest src/agents/ -v --tb=short
