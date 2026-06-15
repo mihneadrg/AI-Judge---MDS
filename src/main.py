@@ -1,16 +1,3 @@
-import sys
-
-# Force UTF-8 on every import of this module (covers both cold starts and hot-reloads)
-for _s in (sys.stdout, sys.stderr):
-    if _s and hasattr(_s, 'reconfigure'):
-        try:
-            _s.reconfigure(encoding='utf-8', errors='replace')
-        except Exception:
-            pass
-
-import logging
-import os
-
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -36,24 +23,6 @@ app.add_middleware(
 )
 
 pipeline = CourtPipeline(model="llama-3.1-8b-instant")
-
-
-@app.on_event("startup")
-async def fix_logging_handlers():
-    """Fix any logging handlers that uvicorn created with charmap encoding."""
-    all_loggers = [logging.root] + [
-        logging.getLogger(n)
-        for n in logging.Logger.manager.loggerDict
-        if isinstance(logging.Logger.manager.loggerDict[n], logging.Logger)
-    ]
-    for lgr in all_loggers:
-        for handler in lgr.handlers:
-            stream = getattr(handler, 'stream', None)
-            if stream and hasattr(stream, 'reconfigure'):
-                try:
-                    stream.reconfigure(encoding='utf-8', errors='replace')
-                except Exception:
-                    pass
 
 
 class StartCaseRequest(BaseModel):
