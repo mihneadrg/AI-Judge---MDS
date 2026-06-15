@@ -12,6 +12,7 @@ import time
 import uuid
 from .prosecutor_agent import ProsecutorAgent
 from .judge_agent import JudgeAgent
+from .legal_research_agent import LegalResearchAgent
 from .interrogator_agent import InterrogatorAgent
 from .complainant_agent import ComplainantAgent
 
@@ -35,7 +36,31 @@ class CourtPipeline:
         self.model = model
         self.prosecutor = ProsecutorAgent(model=model, temperature=0.8)
         self.judge_agent = JudgeAgent(model=model, temperature=0.9)
+        # Temperatură mică — căutarea articolului de lege trebuie să fie factuală.
+        self.legal_researcher = LegalResearchAgent(model=model, temperature=0.2)
         self.interrogator = InterrogatorAgent(model=model, temperature=0.7)
+
+    def _research_law(self, prosecution: dict, verdict: dict) -> dict:
+        """Caută articolul de lege real care fundamentează verdictul.
+
+        Documentarea juridică este suplimentară: dacă eșuează (model offline,
+        cheie lipsă etc.), nu trebuie să compromită verdictul deja pronunțat,
+        așa că întoarcem un fallback gracios în loc să propagăm excepția.
+        """
+        try:
+            return self.legal_researcher.run({"verdict": verdict, "prosecution": prosecution})
+        except Exception as e:
+            return {
+                "law_code": "Codul Penal al României",
+                "article_number": "Art. nedeterminat",
+                "article_title": "Dispoziție legală aplicabilă",
+                "article_text": "Articolul de lege nu a putut fi identificat.",
+                "relevance": "Documentarea juridică nu a putut fi finalizată.",
+                "disclaimer": "Informație juridică orientativă, nu constituie consultanță juridică.",
+                "error": str(e),
+                "agent": "LegalResearchAgent",
+                "model_used": self.model,
+            }
 
     # ── API public ────────────────────────────────────────────────────────────
 
@@ -99,10 +124,12 @@ class CourtPipeline:
         try:
             prosecution = self.prosecutor.run(situation)
             verdict = self.judge_agent.run(prosecution)
+            legal_article = self._research_law(prosecution, verdict)
         except Exception as e:
             return self._error_response(str(e), start_time)
 
         return {"prosecution": prosecution, "final_verdict": verdict,
+                "legal_article": legal_article,
                 "model_used": self.model,
                 "processing_time_seconds": round(time.time() - start_time, 2),
                 "success": True, "error": None}
@@ -148,6 +175,7 @@ class CourtPipeline:
         try:
             prosecution = self.prosecutor.run(full_context)
             verdict = self.judge_agent.run(prosecution)
+            legal_article = self._research_law(prosecution, verdict)
         except Exception as e:
             return {
                 "session_id": session_id,
@@ -167,6 +195,7 @@ class CourtPipeline:
             "verdict": {
                 "prosecution": prosecution,
                 "final_verdict": verdict,
+                "legal_article": legal_article,
                 "processing_time_seconds": round(time.time() - start_time, 2),
             },
             "questions_asked": session["questions_asked"],
@@ -187,6 +216,7 @@ class CourtPipeline:
                 "interrogation": [{ "question": str, "answer": str }, ...],
                 "prosecution": dict,
                 "final_verdict": dict,
+                "legal_article": dict,
                 "processing_time_seconds": float,
             }
         """
@@ -235,6 +265,7 @@ class CourtPipeline:
 
         prosecution = self.prosecutor.run(full_context)
         verdict = self.judge_agent.run(prosecution)
+        legal_article = self._research_law(prosecution, verdict)
 
         return {
             "complainant_name": complainant_name,
@@ -242,6 +273,7 @@ class CourtPipeline:
             "interrogation": interrogation,
             "prosecution": prosecution,
             "final_verdict": verdict,
+            "legal_article": legal_article,
             "processing_time_seconds": round(time.time() - start_time, 2),
         }
 
