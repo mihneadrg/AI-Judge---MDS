@@ -28,7 +28,7 @@ O aplicație web de tip "AI-First" bazată pe o arhitectură multi-agent autonom
 | **B2. Diagrame (Arhitectură & Workflow)** | 1 pct | [arhitectura.md](./arhitectura.md) — Diagramă de workflow multi-agent randată nativ cu Mermaid.js. |
 | **B3. Source Control cu Git** | 1 pct | GitHub: lucru colaborativ, branch-uri și commit-uri multiple per student (vezi istoricul repo-ului). |
 | **B4. Teste Automate & Agent Evals** | 2 pct | Unit Tests cu pytest și un sistem complet de LLM Evals cu generare automată de raport calitativ în [evals/evals_report.md](./evals/evals_report.md). |
-| **B5. Raportare Bug și Rezolvare cu PR** | 1 pct | Corectarea limitării nivelurilor de severitate în fișierul de evals. [Vezi Pull Request și Issue pe GitHub](PUNE_LINKUL_CATRE_PULL_REQUEST_AICI). |
+| **B5. Raportare Bug și Rezolvare cu PR** | 1 pct | Corectarea limitării nivelurilor de severitate în fișierul de evals. [Vezi Pull Request](https://github.com/mihneadrg/AI-Judge---MDS/pull/3) și [Issue pe GitHub](https://github.com/mihneadrg/AI-Judge---MDS/issues/2). |
 | **B6. Pipeline CI/CD** | 1 pct | [.github/workflows/tests.yml](./.github/workflows/tests.yml) — Flux automatizat prin GitHub Actions care rulează suita de teste la fiecare Push pe `main`. |
 | **B7. Raport utilizare tool-uri AI** | 2 pct | [raport_ai.md](./raport_ai.md) — Document ce detaliază modul în care Claude, Gemini și GitHub Copilot au asistat echipa în design și codare. |
 
