@@ -70,7 +70,7 @@ function App() {
       setQuestionsAsked(data.questions_asked)
       setAppState('question')
     } else if (data.state === 'verdict') {
-      setVerdict(data.verdict.final_verdict)
+      setVerdict({ ...data.verdict.final_verdict, legal_article: data.verdict.legal_article })
       setAppState('verdict')
     } else if (data.state === 'error') {
       setError(data.error)

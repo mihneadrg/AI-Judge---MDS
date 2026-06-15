@@ -22,7 +22,10 @@ function buildSteps(trialData) {
     severity: trialData.prosecution.severity_level,
   })
 
-  steps.push({ type: 'verdict', verdict: trialData.final_verdict })
+  steps.push({
+    type: 'verdict',
+    verdict: { ...trialData.final_verdict, legal_article: trialData.legal_article },
+  })
 
   return steps
 }
