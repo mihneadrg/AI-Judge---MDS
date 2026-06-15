@@ -81,7 +81,7 @@ Deliver your verdict. JSON only."""
         return "VINOVAT"
 
     def _fallback_response(self, reason: str, raw_response: str = "") -> dict:
-        partial = self._safe_parse_json(raw_response) if raw_response else {}
+        partial = self._safe_parse_json(raw_response) or {}
         return {
             "case_title": partial.get("case_title", "Cazul Adus în Fața Curții"),
             "charges": partial.get("charges", "Acuzații conform rechizitoriului"),

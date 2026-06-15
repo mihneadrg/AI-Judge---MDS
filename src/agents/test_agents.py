@@ -35,14 +35,14 @@ VALID_PROSECUTION_JSON = {
 }
 
 VALID_VERDICT_JSON = {
-    "case_title": "The State v. The Midnight Guitar Assassin",
-    "charges": "Three counts of noise-related misconduct of the gravest order",
-    "evidence_presented": "The court has reviewed substantial acoustic evidence of wrongdoing",
-    "legal_precedent": "Silence v. Cacophony (1923) — the landmark ruling on nocturnal peace",
-    "verdict": "GUILTY",
-    "sentence": "The defendant must attend 40 hours of mandatory silence meditation",
-    "legal_reasoning": "The evidence is overwhelming. The defendant's disregard for slumber is unprecedented.",
-    "courts_final_words": "Let this serve as a warning to all nocturnal musicians! Court adjourned!",
+    "case_title": "Statul vs. Asasinul cu Chitara de Noapte",
+    "charges": "Trei capete de acuzare pentru tulburarea liniștii publice",
+    "evidence_presented": "Curtea a examinat dovezi acustice substanțiale ale faptei",
+    "legal_precedent": "Liniște vs. Cacofonie (1923) — hotărârea de referință privind pacea nocturnă",
+    "verdict": "VINOVAT",
+    "sentence": "Inculpatul trebuie să participe la 40 de ore de meditație obligatorie în tăcere",
+    "legal_reasoning": "Dovezile sunt copleșitoare. Disprețul inculpatului față de somn este fără precedent.",
+    "courts_final_words": "Să fie acesta un avertisment pentru toți muzicienii nocturni! Curtea se ridică!",
 }
 
 
@@ -187,35 +187,36 @@ class TestJudgeAgent:
         for field in required_fields:
             assert field in result, f"Câmpul '{field}' lipsește din verdict"
 
-    def test_verdict_is_guilty_or_not_guilty(self):
-        """Eval: verdictul este GUILTY sau NOT GUILTY."""
+    def test_verdict_is_vinovat_or_nevinovat(self):
+        """Eval: verdictul este VINOVAT sau NEVINOVAT."""
         prosecution_input = {**VALID_PROSECUTION_JSON, "original_input": "Test", "raw_response": ""}
         with patch.object(self.agent, "_call_ollama", make_mock_ollama(VALID_VERDICT_JSON)):
             result = self.agent.run(prosecution_input)
 
-        assert result["verdict"] in {"GUILTY", "NOT GUILTY"}, (
+        assert result["verdict"] in {"VINOVAT", "NEVINOVAT"}, (
             f"Verdict invalid: '{result['verdict']}'"
         )
 
-    def test_verdict_normalization_guilty(self):
-        """Eval: variante de GUILTY sunt normalizate corect."""
+    def test_verdict_normalization_vinovat(self):
+        """Eval: variante de VINOVAT sunt normalizate corect."""
         guilty_variants = [
-            "GUILTY", "guilty", "Guilty", "The defendant is GUILTY as charged",
-            "GUILTY beyond reasonable doubt",
+            "VINOVAT", "vinovat", "Vinovat", "GUILTY", "guilty",
+            "Inculpatul este VINOVAT dincolo de orice dubiu",
         ]
         for variant in guilty_variants:
-            assert self.agent._normalize_verdict(variant) == "GUILTY", (
-                f"'{variant}' nu a fost normalizat la GUILTY"
+            assert self.agent._normalize_verdict(variant) == "VINOVAT", (
+                f"'{variant}' nu a fost normalizat la VINOVAT"
             )
 
-    def test_verdict_normalization_not_guilty(self):
-        """Eval: variante de NOT GUILTY sunt normalizate corect."""
+    def test_verdict_normalization_nevinovat(self):
+        """Eval: variante de NEVINOVAT sunt normalizate corect."""
         not_guilty_variants = [
-            "NOT GUILTY", "not guilty", "INNOCENT", "The defendant is NOT GUILTY",
+            "NEVINOVAT", "nevinovat", "NOT GUILTY", "INNOCENT", "ACHITAT",
+            "Inculpatul este NEVINOVAT",
         ]
         for variant in not_guilty_variants:
-            assert self.agent._normalize_verdict(variant) == "NOT GUILTY", (
-                f"'{variant}' nu a fost normalizat la NOT GUILTY"
+            assert self.agent._normalize_verdict(variant) == "NEVINOVAT", (
+                f"'{variant}' nu a fost normalizat la NEVINOVAT"
             )
 
     def test_accepts_dict_input(self):
@@ -243,7 +244,7 @@ class TestJudgeAgent:
 
         assert isinstance(result, dict)
         assert "verdict" in result
-        assert result["verdict"] in {"GUILTY", "NOT GUILTY"}
+        assert result["verdict"] in {"VINOVAT", "NEVINOVAT"}
 
     def test_all_string_fields_are_non_empty(self):
         """Eval: câmpurile string din verdict nu sunt goale."""
@@ -274,7 +275,7 @@ class TestCourtPipeline:
         """Integration: pipeline-ul returnează toate câmpurile așteptate."""
         with patch.object(self.pipeline.prosecutor, "_call_ollama",
                           make_mock_ollama(VALID_PROSECUTION_JSON)), \
-             patch.object(self.pipeline.judge, "_call_ollama",
+             patch.object(self.pipeline.judge_agent, "_call_ollama",
                           make_mock_ollama(VALID_VERDICT_JSON)):
             result = self.pipeline.judge("Vecinul cântă noaptea")
 
@@ -287,7 +288,7 @@ class TestCourtPipeline:
         """Integration: rezultatul conține dosarul de la prosecutor."""
         with patch.object(self.pipeline.prosecutor, "_call_ollama",
                           make_mock_ollama(VALID_PROSECUTION_JSON)), \
-             patch.object(self.pipeline.judge, "_call_ollama",
+             patch.object(self.pipeline.judge_agent, "_call_ollama",
                           make_mock_ollama(VALID_VERDICT_JSON)):
             result = self.pipeline.judge("Test situație")
 
@@ -298,7 +299,7 @@ class TestCourtPipeline:
         """Integration: rezultatul conține verdictul de la judge."""
         with patch.object(self.pipeline.prosecutor, "_call_ollama",
                           make_mock_ollama(VALID_PROSECUTION_JSON)), \
-             patch.object(self.pipeline.judge, "_call_ollama",
+             patch.object(self.pipeline.judge_agent, "_call_ollama",
                           make_mock_ollama(VALID_VERDICT_JSON)):
             result = self.pipeline.judge("Test situație")
 
@@ -317,7 +318,7 @@ class TestCourtPipeline:
         """Integration: rezultatul include timpul de procesare."""
         with patch.object(self.pipeline.prosecutor, "_call_ollama",
                           make_mock_ollama(VALID_PROSECUTION_JSON)), \
-             patch.object(self.pipeline.judge, "_call_ollama",
+             patch.object(self.pipeline.judge_agent, "_call_ollama",
                           make_mock_ollama(VALID_VERDICT_JSON)):
             result = self.pipeline.judge("Test")
 
@@ -338,7 +339,7 @@ class TestCourtPipeline:
         """Integration: pipeline-ul raportează corect modelul folosit."""
         with patch.object(self.pipeline.prosecutor, "_call_ollama",
                           make_mock_ollama(VALID_PROSECUTION_JSON)), \
-             patch.object(self.pipeline.judge, "_call_ollama",
+             patch.object(self.pipeline.judge_agent, "_call_ollama",
                           make_mock_ollama(VALID_VERDICT_JSON)):
             result = self.pipeline.judge("Test")
 
