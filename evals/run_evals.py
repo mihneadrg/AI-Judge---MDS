@@ -28,7 +28,7 @@ def evaluate_quality(result_data):
     verdict = result_data.get("final_verdict", {})
 
     if isinstance(prosecution, dict) and "severity_level" in prosecution:
-        valid_levels = ["PETTY", "MODERATE", "SEVERE"]
+        valid_levels = ["PETTY", "MODERATE", "SEVERE", "CATASTROPHIC"]
         if prosecution["severity_level"] in valid_levels:
             score += 1
         else:
