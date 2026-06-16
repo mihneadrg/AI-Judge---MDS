@@ -146,8 +146,10 @@ class CourtPipeline:
             "questions_asked": session["questions_asked"],
         })
 
-        if interrogation_result["needs_more_info"] and session["questions_asked"] < 3:
-            question = interrogation_result["question"]
+        question = interrogation_result.get("question", "")
+        has_question = bool(question and question.strip())
+
+        if interrogation_result["needs_more_info"] and has_question and session["questions_asked"] < 3:
             session["last_question"] = question
 
             return {
