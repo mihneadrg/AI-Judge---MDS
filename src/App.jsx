@@ -57,7 +57,7 @@ function App() {
       })
       if (!response.ok) {
         const err = await response.json()
-        throw new Error(err.detail || 'A apărut o eroare')
+        throw new Error(err.error || err.detail || 'A apărut o eroare')
       }
       handlePipelineResponse(await response.json())
     } catch (err) {
