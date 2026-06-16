@@ -86,7 +86,7 @@ Rulați următoarele comenzi în terminal pentru a configura mediul virtual și 
 pip install -r requirements.txt
 
 # Pornirea serverului FastAPI pe portul 8000
-python -m uvicorn src.main:app --reload --port 8000
+.\start_backend.bat
 
 2. Configurare Frontend (React)
 Într-o nouă fereastră de terminal, navigați în folderul proiectului și rulați:
