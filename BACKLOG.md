@@ -188,20 +188,8 @@ Acest epic introduce un mod de vizionare în care toți actorii procesului (incl
 
 ---
 
-### [US-6.3] Pipeline Autonom (run_autonomous_trial) ✅
 
-**User Story:** Ca spectator, vreau ca întregul ciclu al procesului să ruleze automat pe server, astfel încât să primesc un transcript complet cu toate intervențiile fiecărui agent.
-
-**Criterii de Acceptanță:**
-- Metoda `run_autonomous_trial()` orchestrează: ComplainantAgent → InterrogatorAgent (max 3 runde) → ComplainantAgent (răspunsuri) → ProsecutorAgent → JudgeAgent.
-- Returnează un transcript JSON cu: `situation`, `complainant_name`, `interrogation[]`, `prosecution`, `final_verdict`, `processing_time_seconds`.
-- Endpoint nou `POST /api/v1/watch` expune această funcționalitate.
-
-**Implementare:** `CourtPipeline.run_autonomous_trial()` în `pipeline.py`, endpoint în `main.py`.
-
----
-
-### [US-6.4] Afișarea Pas cu Pas a Procesului (TrialWatcher) ✅
+### [US-6.3] Afișarea Pas cu Pas a Procesului (TrialWatcher) ✅
 
 **User Story:** Ca spectator, vreau să văd procesul desfășurându-se treptat, cu fiecare intervenție apărând pe rând, astfel încât să am senzația că urmăresc un proces în timp real.
 
